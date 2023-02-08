@@ -6,6 +6,7 @@ class FutureButton extends StatefulWidget {
   final String? text;
   final double? textSize;
   final FontWeight? textStyle;
+  final EdgeInsetsGeometry? textPadding;
   final double borderRadius;
   final bool enabled;
   final Function()? onClick;
@@ -14,6 +15,7 @@ class FutureButton extends StatefulWidget {
   final double iconSize;
   final bool expended;
   final EdgeInsetsGeometry? iconPadding;
+  final EdgeInsetsGeometry? indicatorPadding;
   final IconAlignment iconAlignment;
   final bool visibleIndicator;
 
@@ -28,6 +30,7 @@ class FutureButton extends StatefulWidget {
     this.text,
     this.textSize = 16,
     this.textStyle,
+    this.textPadding,
     this.width,
     this.height,
     this.margin,
@@ -40,6 +43,7 @@ class FutureButton extends StatefulWidget {
     this.expended = false,
     this.iconSize = 18,
     this.iconPadding,
+    this.indicatorPadding,
     this.iconAlignment = IconAlignment.end,
     this.visibleIndicator = true,
     this.expendedState,
@@ -59,6 +63,7 @@ class _FutureButtonState extends State<FutureButton> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final title = widget.textState?.call(state) ?? widget.text ?? "";
     final color = isEnabled ? Colors.white : Colors.grey.shade400;
     final background = isEnabled ? theme.primaryColor : Colors.grey.shade200;
 
@@ -72,13 +77,15 @@ class _FutureButtonState extends State<FutureButton> {
           onTap: isEnabled && isLoaded ? _onClick : null,
           child: AbsorbPointer(
             child: Container(
-              width: widget.width,
+              width: isExpended ? widget.width : null,
               height: widget.padding == null ? widget.height : null,
               padding: widget.padding ??
-                  const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
+                  (title.isNotEmpty
+                      ? const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        )
+                      : widget.indicatorPadding ?? const EdgeInsets.all(12)),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -92,13 +99,16 @@ class _FutureButtonState extends State<FutureButton> {
                     color: color,
                     colorState: widget.colorState,
                     size: widget.iconSize,
-                    padding: widget.iconPadding,
+                    padding:
+                        title.isNotEmpty ? widget.iconPadding : EdgeInsets.zero,
+                    visibleIndicator: widget.visibleIndicator,
                   ),
                   if (isExpended && widget.iconAlignment == IconAlignment.start)
                     const Spacer(),
                   FBText(
                     state: state,
                     primary: color,
+                    padding: widget.textPadding,
                     text: widget.text,
                     textSize: widget.textSize,
                     textStyle: widget.textStyle,
@@ -116,7 +126,9 @@ class _FutureButtonState extends State<FutureButton> {
                     color: color,
                     colorState: widget.colorState,
                     size: widget.iconSize,
-                    padding: widget.iconPadding,
+                    padding:
+                        title.isNotEmpty ? widget.iconPadding : EdgeInsets.zero,
+                    visibleIndicator: widget.visibleIndicator,
                   ),
                 ],
               ),
@@ -166,25 +178,25 @@ class _FutureButtonState extends State<FutureButton> {
 class FBIcon extends StatelessWidget {
   final ButtonState state;
   final IconData? icon;
-  final bool visible;
   final EdgeInsetsGeometry? padding;
   final Color? color;
   final double? size;
   final IconData? Function(ButtonState state)? iconState;
   final Color? Function(ButtonState state)? colorState;
-  final bool indicatorVisible;
+  final bool visible;
+  final bool visibleIndicator;
 
   const FBIcon({
     Key? key,
     required this.state,
     this.icon,
-    this.visible = true,
     this.padding,
     this.color,
     this.size,
     this.iconState,
     this.colorState,
-    this.indicatorVisible = true,
+    this.visible = true,
+    this.visibleIndicator = true,
   }) : super(key: key);
 
   @override
@@ -194,7 +206,7 @@ class FBIcon extends StatelessWidget {
       visible: visible,
       child: Container(
         padding: padding,
-        child: indicatorVisible && state == ButtonState.loading
+        child: visibleIndicator && state == ButtonState.loading
             ? SizedBox(
                 width: size,
                 height: size,
@@ -216,33 +228,44 @@ class FBIcon extends StatelessWidget {
 
 class FBText extends StatelessWidget {
   final Color? primary;
+  final EdgeInsetsGeometry? padding;
   final String? text;
   final double? textSize;
   final FontWeight? textStyle;
   final String? Function(ButtonState state)? textState;
   final Color? Function(ButtonState state)? colorState;
   final ButtonState state;
+  final bool visible;
 
   const FBText({
     Key? key,
     required this.state,
     this.primary,
+    this.padding,
     this.text,
     this.textSize = 14,
     this.textStyle,
     this.textState,
     this.colorState,
+    this.visible = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      textState?.call(state) ?? text ?? "",
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        color: colorState?.call(state) ?? primary,
-        fontSize: textSize,
-        fontWeight: textStyle,
+    final value = textState?.call(state) ?? text ?? "";
+    return Visibility(
+      visible: visible && value.isNotEmpty,
+      child: Container(
+        padding: padding,
+        child: Text(
+          value,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colorState?.call(state) ?? primary,
+            fontSize: textSize,
+            fontWeight: textStyle,
+          ),
+        ),
       ),
     );
   }

@@ -109,16 +109,20 @@ class Home extends StatelessWidget {
               onClick: () {},
             ),
             FutureButton(
-              margin: const EdgeInsets.all(12),
               width: 200,
-              expended: true,
-              iconAlignment: IconAlignment.start,
-              iconPadding: const EdgeInsets.only(right: 16),
               borderRadius: 25,
+              iconPadding: const EdgeInsets.only(left: 16),
+              expendedState: (state) {
+                if (state == ButtonState.loading) {
+                  return false;
+                } else {
+                  return true;
+                }
+              },
               textState: (state) {
                 switch (state) {
                   case ButtonState.loading:
-                    return "Uploading...";
+                    return "";
                   case ButtonState.disabled:
                     return "Disabled";
                   case ButtonState.initial:
